@@ -39,13 +39,18 @@ def test_create_single_level_mesh_graph():
         fig.savefig(f.name)
 
 
+@pytest.mark.parametrize("use_graph_tool", [True, False])
 @pytest.mark.parametrize("kind", ["graphcast", "keisler", "oskarsson_hierarchical"])
-def test_create_graph_archetype(kind):
+def test_create_graph_archetype(kind, use_graph_tool):
     xy = _create_fake_xy(N=64)
     fn_name = f"create_{kind}_graph"
     fn = getattr(wmg.create.archetype, fn_name)
 
-    fn(xy_grid=xy)
+    if use_graph_tool:
+        with wmg.use_graph_tool_backend():
+            fn(xy_grid=xy)
+    else:
+        fn(xy_grid=xy)
 
 
 # list the connectivity options for g2m and m2g and the kwargs to test

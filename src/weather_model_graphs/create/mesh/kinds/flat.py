@@ -1,6 +1,7 @@
-import networkx
+# import networkx
 import numpy as np
 
+from .... import backend
 from ....networkx_utils import prepend_node_index
 from .. import mesh as mesh_graph
 
@@ -44,7 +45,7 @@ def create_flat_multiscale_mesh_graph(
             f"Given value: {level_refinement_factor}."
         )
 
-    G_all_levels: list[networkx.DiGraph] = mesh_graph.create_multirange_2d_mesh_graphs(
+    G_all_levels: list[backend.DiGraph] = mesh_graph.create_multirange_2d_mesh_graphs(
         max_num_levels=max_num_levels,
         xy=xy,
         grid_refinement_factor=grid_refinement_factor,
@@ -70,10 +71,10 @@ def create_flat_multiscale_mesh_graph(
             .reshape(int(num_nodes_x * num_nodes_y / (level_refinement_factor**2)), 2)
         )
         ij = [tuple(x) for x in ij]
-        G_all_levels[lev] = networkx.relabel_nodes(
+        G_all_levels[lev] = backend.relabel_nodes(
             G_all_levels[lev], dict(zip(G_all_levels[lev].nodes, ij))
         )
-        G_tot = networkx.compose(G_tot, G_all_levels[lev])
+        G_tot = backend.compose(G_tot, G_all_levels[lev])
 
     # Relabel mesh nodes to start with 0
     G_tot = prepend_node_index(G_tot, 0)

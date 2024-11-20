@@ -1,6 +1,7 @@
-import networkx
+# import networkx
 import numpy as np
 from loguru import logger
+from ... import backend
 
 
 def create_single_level_2d_mesh_graph(xy, nx, ny):
@@ -46,7 +47,7 @@ def create_single_level_2d_mesh_graph(xy, nx, ny):
     ly = np.linspace(ym + dy / 2, yM - dy / 2, ny)
 
     mg = np.meshgrid(lx, ly)
-    g = networkx.grid_2d_graph(len(lx), len(ly))
+    g = backend.grid_2d_graph(len(lx), len(ly))
 
     # Node name and `pos` attribute takes form (x, y)
     for node in g.nodes:
@@ -63,7 +64,7 @@ def create_single_level_2d_mesh_graph(xy, nx, ny):
     )
 
     # turn into directed graph
-    dg = networkx.DiGraph(g)
+    dg = backend.DiGraph(g)
     for u, v in g.edges():
         d = np.sqrt(np.sum((g.nodes[u]["pos"] - g.nodes[v]["pos"]) ** 2))
         dg.edges[u, v]["len"] = d

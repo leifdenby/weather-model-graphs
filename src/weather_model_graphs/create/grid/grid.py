@@ -1,7 +1,8 @@
-import networkx
+# import networkx
 import numpy as np
 
 from ...networkx_utils import prepend_node_index
+from ... import backend
 
 
 def create_grid_graph_nodes(xy, level_id=-1):
@@ -38,7 +39,7 @@ def create_grid_graph_nodes(xy, level_id=-1):
     # grid nodes
     Ny, Nx = xy.shape[1:]
 
-    G_grid = networkx.grid_2d_graph(Ny, Nx)
+    G_grid = backend.grid_2d_graph(Ny, Nx)
     G_grid.clear_edges()
 
     # vg features (only pos introduced here)

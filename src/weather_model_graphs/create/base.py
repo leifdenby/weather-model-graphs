@@ -9,11 +9,10 @@ function uses `connect_nodes_across_graphs` to connect nodes across the componen
 """
 
 
-import networkx
-import networkx as nx
 import numpy as np
 import scipy.spatial
 
+from .. import backend
 from ..networkx_utils import (
     replace_node_labels_with_unique_ids,
     split_graph_by_edge_attribute,
@@ -71,7 +70,7 @@ def create_all_graph_components(
         such that the grid node is contained within it. Connect these 4 (or less along edges)
         mesh nodes to the grid node.
     """
-    graph_components: dict[networkx.DiGraph] = {}
+    graph_components: dict[backend.DiGraph] = {}
 
     if len(xy.shape) != 3:
         raise NotImplementedError(
@@ -136,7 +135,7 @@ def create_all_graph_components(
             graph.edges[edge]["component"] = name
 
     # merge to single graph
-    G_tot = networkx.compose_all(graph_components.values())
+    G_tot = backend.compose_all(graph_components.values())
     # only keep graph attributes that are the same for all components
     for key in graph_components["m2m"].graph.keys():
         if not all(
@@ -310,7 +309,7 @@ def connect_nodes_across_graphs(
                     ) = split_on_edge_attribute_existance(edge_check_graph, "level")
 
                     # Check if graph has levels (hierarchical or multi-scale edges)
-                    if nx.is_empty(level_subgraph):
+                    if backend.is_empty(level_subgraph):
                         # Consider edges in whole graph (whole graph is level 1)
                         first_level_graph = edge_check_graph  # == no_level_subgraph
                     else:
@@ -336,7 +335,7 @@ def connect_nodes_across_graphs(
     else:
         raise NotImplementedError(method)
 
-    G_connect = networkx.DiGraph()
+    G_connect = backend.DiGraph()
     G_connect.add_nodes_from(sorted(G_source.nodes(data=True)))
     G_connect.add_nodes_from(sorted(G_target.nodes(data=True)))
 
