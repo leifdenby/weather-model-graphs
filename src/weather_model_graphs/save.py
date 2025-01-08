@@ -1,6 +1,6 @@
 import pickle
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 import networkx
 from loguru import logger
@@ -165,3 +165,44 @@ def to_pickle(graph: networkx.DiGraph, output_directory: str, name: str):
     with open(fp, "wb") as f:
         pickle.dump(graph, f)
     logger.info(f"Saved graph to {fp}.")
+
+
+def split_into_neural_lam_subgraphs(
+    graph, is_hierachical=False
+) -> Dict[str, networkx.Graph]:
+    """
+    Split the graph into the different subgraphs that are used in the
+    neural-lam model. This includes creating the `g2m`, `m2m`, `m2g` and `g2g`
+    subgraphs. If the graph is hierarchical, the `m2m` graph is further split
+    into subgraphs containing the up, in-level and down connections (as in
+    `m2m_up`, `m2m_same` and `m2m_down`).
+
+    Parameters
+    ----------
+    graph : wmg.Graph
+        Graph to split
+    is_hierachical : bool
+        If True, the m2m graph is split into the up, in-level and down
+        connections. Default is False.
+
+    Returns
+    -------
+    Dict[str, networkx.Graph]
+        Dictionary of subgraphs keyed by the subgraph name
+    """
+    graph_components = split_graph_by_edge_attribute(graph=graph, attr="component")
+
+    if is_hierachical:
+        # split the m2m graph into the different parts that create the up, in-level and down connections respectively
+        # this is how the graphs is stored in the neural-lam codebase
+        m2m_graph = graph_components.pop("m2m")
+        m2m_graph_components = split_graph_by_edge_attribute(
+            graph=m2m_graph, attr="direction"
+        )
+        m2m_graph_components = {
+            f"m2m_{direction}": graph
+            for direction, graph in m2m_graph_components.items()
+        }
+        graph_components.update(m2m_graph_components)
+
+    return graph_components

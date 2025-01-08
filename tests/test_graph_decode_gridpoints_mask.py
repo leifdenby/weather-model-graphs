@@ -14,6 +14,20 @@ def load_adjecency_matrix(graph_name, output_directory="."):
     return edge_index.numpy()
 
 
+def _save_to_neural_lam_format(graph, output_directory, name):
+    graph_components = wmg.save.split_into_neural_lam_subgraphs(
+        graph=graph, is_hierachical=True
+    )
+
+    for name, graph in graph_components.items():
+        wmg.save.to_pyg(
+            graph=graph,
+            output_directory=output_directory,
+            name=name,
+            list_from_attribute="level",
+        )
+
+
 def test_graph_decode_gridpoints_mask():
     """
     Test to ensure that when applying a mask to select which grid nodes to
@@ -38,10 +52,10 @@ def test_graph_decode_gridpoints_mask():
         name_filtered = "example_keisler_graph_filtered"
         name_unfiltered = "example_keisler_graph"
 
-        wmg.save.to_pyg(
+        _save_to_neural_lam_format(
             graph=unfiltered_graph, output_directory=tmpdirname, name=name_unfiltered
         )
-        wmg.save.to_pyg(
+        _save_to_neural_lam_format(
             graph=filtered_graph, output_directory=tmpdirname, name=name_filtered
         )
 
@@ -67,9 +81,5 @@ def test_graph_decode_gridpoints_mask():
             continue
         adj_pairs.append((m_idx, g_idx))
     adj_unfiltered_masked = np.array(adj_pairs).T
-
-    import ipdb
-
-    ipdb.set_trace()
 
     np.testing.assert_equal(adj_filtered, adj_unfiltered_masked)

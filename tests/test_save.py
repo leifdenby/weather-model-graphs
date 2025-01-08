@@ -5,34 +5,33 @@ from loguru import logger
 
 import tests.utils as test_utils
 import weather_model_graphs as wmg
-from weather_model_graphs.save import HAS_PYG
+from weather_model_graphs.save import HAS_PYG, split_into_neural_lam_subgraphs
 
 
-@pytest.mark.parametrize("list_from_attribute", [None, "level"])
-def test_save_to_pyg(list_from_attribute):
+@pytest.mark.parametrize("kind", ["graphcast", "keisler", "oskarsson_hierarchical"])
+def test_save_to_pyg_neural_lam(kind):
     if not HAS_PYG:
         logger.warning(
             "Skipping test_save_to_pyg because weather-model-graphs[pytorch] is not installed."
         )
         return
 
+    is_hierarchical = kind == "oskarsson_hierarchical"
+    if is_hierarchical:
+        list_from_attribute = "level"
+    else:
+        list_from_attribute = None
+
     xy = test_utils.create_fake_xy(N=64)
-    graph = wmg.create.archetype.create_oskarsson_hierarchical_graph(coords=xy)
+    fn_name = f"create_{kind}_graph"
+    fn = getattr(wmg.create.archetype, fn_name)
+    graph = fn(coords=xy)
 
-    graph_components = wmg.split_graph_by_edge_attribute(graph=graph, attr="component")
-
-    # split the m2m graph into the different parts that create the up, in-level and down connections respectively
-    # this is how the graphs is stored in the neural-lam codebase
-    m2m_graph = graph_components.pop("m2m")
-    m2m_graph_components = wmg.split_graph_by_edge_attribute(
-        graph=m2m_graph, attr="direction"
+    graph_components = split_into_neural_lam_subgraphs(
+        graph=graph, is_hierachical=is_hierarchical
     )
-    m2m_graph_components = {
-        f"m2m_{name}": graph for name, graph in m2m_graph_components.items()
-    }
-    graph_components.update(m2m_graph_components)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(suffix=f"__{kind}") as tmpdir:
         for name, graph in graph_components.items():
             wmg.save.to_pyg(
                 graph=graph,

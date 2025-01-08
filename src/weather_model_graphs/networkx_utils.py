@@ -47,10 +47,18 @@ class MissingEdgeAttributeError(Exception):
     pass
 
 
-def split_graph_by_edge_attribute(graph, attr):
+def split_graph_by_edge_attribute(
+    graph, attr, node_retention="connected_to_edges_with_attr"
+):
     """
     Split a graph into subgraphs based on an edge attribute, returning
-    a dictionary of subgraphs keyed by the edge attribute value.
+    a dictionary of subgraphs keyed by the edge attribute value. By default,
+    each subgraph contains only the nodes that are connected to the edges of a
+    given subgraph (`node_retention='connected_to_edges_with_attr'`).
+    Since removing nodes leads pytorch-geometric to reindex the nodes (the node
+    indexing in pytorch-geometric simply runs from 0 to n_nodes-1), the option
+    to includes all nodes in each subgraph (`node_retention='all'`) is also
+    included.
 
     Parameters
     ----------
@@ -58,6 +66,10 @@ def split_graph_by_edge_attribute(graph, attr):
         Graph to split
     attr : str
         Edge attribute to split the graph by
+    node_retention : str
+        If set to 'all', all nodes will be kept in the subgraphs, even those
+        where a node is not connected by an edge with the provided attribute.
+        Defaults to `connected_to_edges_with_attr`.
 
     Returns
     -------
@@ -85,6 +97,16 @@ def split_graph_by_edge_attribute(graph, attr):
                 for edge in graph.edges
                 if attr in graph.edges[edge] and graph.edges[edge][attr] == edge_value
             ]
+        )
+
+    if node_retention == "all":
+        # ensure that all nodes are included in each subgraph
+        for subgraph in subgraphs.values():
+            subgraph.add_nodes_from(graph.nodes)
+    elif node_retention != "connected_to_edges_with_attr":
+        raise ValueError(
+            f"Invalid value for 'node_retention' ({node_retention}). "
+            "Must be either 'all' or 'connected_to_edges_with_attr'."
         )
 
     # copy node attributes
